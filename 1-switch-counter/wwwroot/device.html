@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- Save as device.html -->
+<html>
+<head>
+  <script type="text/javascript">
+    window.addEventListener('load', async function(){
+      const response = await fetch("device.php?resource=switches&format=json", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      const result = await response.json();
+      console.log(result);
+
+      let h3 = document.createElement("h3");
+      h3.innerText = "Device Switch Entries: "+result.length;
+
+      let dl = document.createElement("dl");
+      result.map(function(item){
+        const d = new Date(item.date);
+        let dt = document.createElement("dt");
+        dt.title = d.toLocaleString();
+        dt.textContent = item.device;
+        dt.style = "font-weight: bold";
+        dl.appendChild(dt);
+        let dd = document.createElement("dd");
+        try {
+          let switchArr = JSON.parse(item.switches);
+          for (i=0;i<switchArr.length;i++) {
+            let icon = document.createElement("span");
+            if (switchArr[i] == 1) {
+              icon.style = "background: green; color: white; padding: 0 0.1em;";
+              icon.textContent = "On";
+            } else {
+              icon.style = "background: red; color: white; padding: 0 0.1em;";
+              icon.textContent = "Off";
+            }
+            dd.appendChild(icon);
+          }
+        } catch (e) {
+          dd.textContent = item.switches;
+        }
+        dl.appendChild(dd);
+      });
+
+      const out = document.getElementById("deviceOut");
+      out.appendChild(h3);
+      out.appendChild(dl);
+    });
+  </script>
+</head>
+<body>
+  <div id="deviceOut"></div>
+</body>
+</html>
