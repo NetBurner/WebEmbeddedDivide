@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" />
+    <title>Laundromat Example</title>
+    <style type="text/css">
+        body { font-family: Arial, Helvetica, san-serif; }
+        label, dt { font-weight: bold; }
+        .machine-status {
+            background: black;
+            color: green;
+            display: inline-block;
+            min-height: 1.5em;
+            min-width: 25em;
+            vertical-align: bottom;
+        }
+        .machine-status b {
+            margin-left: 1em;
+        }
+    </style>
+    <script type="text/javascript">
+        function outputStatus(statusBox, title, content) {
+            let titleEl = document.createElement("b");
+            titleEl.appendChild(document.createTextNode(title));
+            let contentEl = document.createTextNode(content);
+
+            statusBox.appendChild(titleEl);
+            statusBox.appendChild(contentEl);
+        }
+
+        function updateMachineStatus(num, response){
+            let statusBox = document.querySelector('[data-machine-num="'+num+'"] .machine-status');
+            statusBox.replaceChildren([]); // clear
+            if (response.credits) outputStatus(statusBox, "Credits:", response.credits);
+            if (response.cycle) outputStatus(statusBox, "Cycle:", response.cycle);
+            if (response.timeLeft) outputStatus(statusBox, "Time Left:", response.timeLeft);
+            if (response.user) outputStatus(statusBox, "User:", response.user);
+            if (response.error) outputStatus(statusBox, "Error:", response.error);
+
+            if (response.cycle === 0 && response.timeLeft === 0) outputStatus(statusBox, "Not In Use", "");
+        }
+
+        window.addEventListener('load', async function() {
+            let usernameField = document.getElementsByName("username")[0];
+            let creditButtons = document.getElementsByClassName("credit");
+            for (btn of creditButtons) {
+                btn.addEventListener('click', async function(){
+                    let num = this.closest("dd").dataset.machineNum;
+                    let cycle = this.parentElement.querySelector("select.cycle").value;
+
+                    if (!cycle) {
+                        updateMachineStatus(num,{error: "Please select a cycle."});
+                        return;
+                    }
+
+                    const response = await fetch(window.location.origin+"/machines/"+num, {
+                        method: "POST",
+                        body: JSON.stringify({action: "start", user: usernameField.value, credits: 1, cycle: cycle})
+                    });
+
+                    if (!response.ok) {
+                        updateMachineStatus(num,{error: response.status});
+                    } else {
+                        updateMachineStatus(num,await response.json());
+                    }
+                });
+            }
+            let cycleSelectors = document.getElementsByClassName("cycle");
+        });
+
+        // update machine status every 5 seconds
+        setInterval(async function(){
+            const response = await fetch(window.location.origin+"/machines");
+            const resJSON = await response.json();
+
+            if (!response.ok) {
+                console.error(response.status);
+            } else if (!resJSON) {
+                console.error(response);
+            } else if (resJSON[0].timeLeft == undefined) {
+                console.error(response);
+            } else {
+                for(i=0;i<resJSON.length;i++) {
+                    const machine = resJSON[i];
+                    updateMachineStatus(i,machine);
+                }
+            }
+        }, 5000);
+    </script>
+</head>
+<body>
+<h1>Laundromat Example</h1>
+<label for="username">Your Name:</label> <input type="text" name="username" />
+<dl id="machines">
+    <dt>Washer 1</dt>
+    <dd data-machine-num="0">
+        <span class="machine-status"></span>
+        <select class="cycle">
+            <option value="">Choose a cycle</option>
+            <option value="1">Eco - Cold</option>
+            <option value="2">Quick - Warm</option>
+            <option value="3">Heavy - Hot</option>
+            <option value="4">Delicate - Cold</option>
+        </select>
+        <button class="credit">Start</button>
+    </dd>
+    <dt>Washer 2</dt>
+    <dd data-machine-num="1">
+        <span class="machine-status"></span>
+        <select class="cycle">
+            <option value="">Choose a cycle</option>
+            <option value="1">Eco - Cold</option>
+            <option value="2">Quick - Warm</option>
+            <option value="3">Heavy - Hot</option>
+            <option value="4">Delicate - Cold</option>
+        </select>
+        <button class="credit">Start</button>
+    </dd>
+    <dt>Dryer 1</dt>
+    <dd data-machine-num="2">
+        <span class="machine-status"></span>
+        <select class="cycle">
+            <option value="">Choose a cycle</option>
+            <option value="1">Auto Sensor Dry</option>
+            <option value="2">Warm</option>
+            <option value="3">Hot</option>
+            <option value="4">Air Dry (No Heat)</option>
+        </select>
+        <button class="credit">Start</button>
+    </dd>
+    <dt>Dryer 2</dt>
+    <dd data-machine-num="3">
+        <span class="machine-status"></span>
+        <select class="cycle">
+            <option value="">Choose a cycle</option>
+            <option value="1">Auto Sensor Dry</option>
+            <option value="2">Warm</option>
+            <option value="3">Hot</option>
+            <option value="4">Air Dry (No Heat)</option>
+        </select>
+        <button class="credit">Start</button>
+    </dd>
+</dl>
+</body>
+</html>

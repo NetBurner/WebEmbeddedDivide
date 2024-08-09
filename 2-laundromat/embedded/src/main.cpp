@@ -22,19 +22,19 @@ uint16_t writeOnlyFlags = MQTT::eObj_Flag_PubOnWrite|MQTT::eObj_Flag_PubRetain;
 
 // MQTT Config variables (customizable via config system or via MQTT)
 // Set the MQTT broker URL appropriately via the config system to enable functionality
-MQTT::mqtt_int washer1Credits(0,"washer1/credits", NULL, readWriteFlags);
-MQTT::mqtt_int washer1Cycle(0,"washer1/cycle", NULL, readWriteFlags);
-MQTT::mqtt_int washer1TimeLeft(0,"washer1/timeLeft", NULL, writeOnlyFlags); // remote side can't set
-MQTT::mqtt_int washer2Credits(0,"washer2/credits", NULL, readWriteFlags);
-MQTT::mqtt_int washer2Cycle(0,"washer2/cycle", NULL, readWriteFlags);
-MQTT::mqtt_int washer2TimeLeft(0,"washer2/timeLeft", NULL, writeOnlyFlags); // remote side can't set
+MQTT::mqtt_int washer1Credits(0,"laundryExample/washer1/credits", NULL, readWriteFlags);
+MQTT::mqtt_int washer1Cycle(0,"laundryExample/washer1/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int washer1TimeLeft(0,"laundryExample/washer1/timeLeft", NULL, writeOnlyFlags); // remote side can't set
+MQTT::mqtt_int washer2Credits(0,"laundryExample/washer2/credits", NULL, readWriteFlags);
+MQTT::mqtt_int washer2Cycle(0,"laundryExample/washer2/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int washer2TimeLeft(0,"laundryExample/washer2/timeLeft", NULL, writeOnlyFlags); // remote side can't set
 
-MQTT::mqtt_int dryer1Credits(0,"dryer1/credits", NULL, readWriteFlags);
-MQTT::mqtt_int dryer1Cycle(0,"dryer1/cycle", NULL, readWriteFlags);
-MQTT::mqtt_int dryer1TimeLeft(0,"dryer1/timeLeft", NULL, writeOnlyFlags); // remote side can't set
-MQTT::mqtt_int dryer2Credits(0,"dryer2/credits", NULL, readWriteFlags);
-MQTT::mqtt_int dryer2Cycle(0,"dryer2/cycle", NULL, readWriteFlags);
-MQTT::mqtt_int dryer2TimeLeft(0,"dryer2/timeLeft", NULL, writeOnlyFlags); // remote side can't set
+MQTT::mqtt_int dryer1Credits(0,"laundryExample/dryer1/credits", NULL, readWriteFlags);
+MQTT::mqtt_int dryer1Cycle(0,"laundryExample/dryer1/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int dryer1TimeLeft(0,"laundryExample/dryer1/timeLeft", NULL, writeOnlyFlags); // remote side can't set
+MQTT::mqtt_int dryer2Credits(0,"laundryExample/dryer2/credits", NULL, readWriteFlags);
+MQTT::mqtt_int dryer2Cycle(0,"laundryExample/dryer2/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int dryer2TimeLeft(0,"laundryExample/dryer2/timeLeft", NULL, writeOnlyFlags); // remote side can't set
 
 long timeCounters[4] = {0};
 bool machineStates[4] = {FALSE};

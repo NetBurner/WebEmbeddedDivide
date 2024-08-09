@@ -1,17 +1,9 @@
-FROM php:8.2-alpine3.18
-RUN apk update \
-    && apk add --no-cache \
-    apache2 \
-    apache2-utils \
-    php82-apache2 \
-    php82-sqlite3
+FROM node:22.6-alpine3.19
 
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-ENV APACHE_LOG_DIR /var/log/apache2
+WORKDIR /app
+COPY wwwroot/* /app
 
-EXPOSE 80
-CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]
+RUN npm install
 
-WORKDIR /var/www/localhost/htdocs
-COPY wwwroot/* /var/www/localhost/htdocs
+EXPOSE 8000
+CMD ["npm", "start"]
