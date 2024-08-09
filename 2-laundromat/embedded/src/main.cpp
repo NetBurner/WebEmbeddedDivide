@@ -12,54 +12,64 @@
 
 const char *AppName = "Laundromat";
 
-int DEFAULT_DURATION = 15; // 15 second washer/dryer times for demo purposes
+int DEFAULT_DURATION_SEC = 30; // 30 second washer/dryer times for demo purposes
 
 // MQTT client which handles connection/etc via the config system, and pub/subs the below variables
 MQTT::ConfiguredClient MqttClient;
 
+uint16_t readWriteFlags = MQTT::eObj_Flag_PubOnWrite|MQTT::eObj_Flag_Subscribe|MQTT::eObj_Flag_Sub_NoLocal|MQTT::eObj_Flag_PubRetain;
+uint16_t writeOnlyFlags = MQTT::eObj_Flag_PubOnWrite|MQTT::eObj_Flag_PubRetain;
+
 // MQTT Config variables (customizable via config system or via MQTT)
 // Set the MQTT broker URL appropriately via the config system to enable functionality
-MQTT::mqtt_int washer1Credits(0,"washer1/credits");
-MQTT::mqtt_int washer1Cycle(0,"washer1/cycle");
-MQTT::mqtt_int washer1TimeLeft(0,"washer1/timeLeft");
-MQTT::mqtt_int washer2Credits(0,"washer2/credits");
-MQTT::mqtt_int washer2Cycle(0,"washer2/cycle");
-MQTT::mqtt_int washer2TimeLeft(0,"washer2/timeLeft");
+MQTT::mqtt_int washer1Credits(0,"washer1/credits", NULL, readWriteFlags);
+MQTT::mqtt_int washer1Cycle(0,"washer1/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int washer1TimeLeft(0,"washer1/timeLeft", NULL, writeOnlyFlags); // remote side can't set
+MQTT::mqtt_int washer2Credits(0,"washer2/credits", NULL, readWriteFlags);
+MQTT::mqtt_int washer2Cycle(0,"washer2/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int washer2TimeLeft(0,"washer2/timeLeft", NULL, writeOnlyFlags); // remote side can't set
 
-MQTT::mqtt_int dryer1Credits(0,"dryer1/credits");
-MQTT::mqtt_int dryer1Cycle(0,"dryer1/cycle");
-MQTT::mqtt_int dryer1TimeLeft(0,"dryer1/timeLeft");
-MQTT::mqtt_int dryer2Credits(0,"dryer2/credits");
-MQTT::mqtt_int dryer2Cycle(0,"dryer2/cycle");
-MQTT::mqtt_int dryer2TimeLeft(0,"dryer2/timeLeft");
+MQTT::mqtt_int dryer1Credits(0,"dryer1/credits", NULL, readWriteFlags);
+MQTT::mqtt_int dryer1Cycle(0,"dryer1/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int dryer1TimeLeft(0,"dryer1/timeLeft", NULL, writeOnlyFlags); // remote side can't set
+MQTT::mqtt_int dryer2Credits(0,"dryer2/credits", NULL, readWriteFlags);
+MQTT::mqtt_int dryer2Cycle(0,"dryer2/cycle", NULL, readWriteFlags);
+MQTT::mqtt_int dryer2TimeLeft(0,"dryer2/timeLeft", NULL, writeOnlyFlags); // remote side can't set
 
-void setMachine(int num, bool val) {
-	if (num == 1) {
-		LEDs[0] = val;
-	} else if (num == 2) {
-		LEDs[1] = val;
-	} else if (num == 3) {
-		LEDs[2] = val;
-	} else if (num == 4) {
-		LEDs[3] = val;
-	} else {
-		printf("Invalid Machine Num %d\r\n", num);
-		return;
-	}
-	printf("Set Machine %d to %s\r\n", num, (val ? "ON" : "OFF"));
-}
+long timeCounters[4] = {0};
+bool machineStates[4] = {FALSE};
 
 void handleMachine(int num, MQTT::mqtt_int &credits, MQTT::mqtt_int &cycle, MQTT::mqtt_int &timeLeft) {
-	if (credits > 0 && cycle > 0) { // user has paid and selected a cycle
-		setMachine(num, TRUE); // ON
+
+	if (num < 0 || num > 3) {
+		printf("\r\nInvalid machine num %d", num);
+		return;
+	}
+
+	long timeCalc = timeCounters[num] - Secs;
+	if (timeCalc < 0) timeCalc = 0;
+	if (timeLeft != timeCalc) timeLeft = timeCalc; // only set mqtt_ints when needed
+
+	// user has paid and selected a cycle but it's not started yet
+	if (credits > 0 && cycle > 0 && machineStates[num] == FALSE) {
+		printf("\r\nSetting machine %d to ON", num);
+		machineStates[num] = TRUE;
+		LEDs[num] = TRUE;
 		credits--;
-		timeLeft = DEFAULT_DURATION;
-	} else if (cycle > 0 && timeLeft < 0) { // cycle has begun but time is more than expired
-		setMachine(num, FALSE); // OFF
+		timeCounters[num] = Secs + DEFAULT_DURATION_SEC;
+	}
+	// cycle has begun and running but time is expired
+	else if (cycle > 0 && timeLeft <= 0 && machineStates[num] == TRUE)
+	{
+		printf("\r\nSetting machine %d to OFF", num);
+		machineStates[num] = FALSE;
+		LEDs[num] = FALSE;
 		cycle = 0; // reset the current cycle (to "off")
-		timeLeft = 0; // we'll use 0 as a neutral "off" state, letting it dip negative when ending
-	} else {
-		printf("Machine %d is %d credits %d cycle %d time left\r\n", num, (int)credits, (int)cycle, (int)timeLeft);
+		timeCounters[num] = 0;
+	}
+	else
+	{
+		printf("\r\nMachine %d is %s [%d credits, %d cycle, %d time left]", num, machineStates[num] ? "ON" : "OFF", (int)credits, (int)cycle, (int)timeLeft);
 	}
 }
 
@@ -71,38 +81,39 @@ void UserMain(void *pd)
 	init(); // Initialize network stack
 	WaitForActiveNetwork(TICKS_PER_SECOND * 5); // Wait for DHCP address
 	EnableSystemDiagnostics(); // Remove in production
-	printf("Application started\n");
+	printf("\nApplication started");
 
-    //MqttClient.Connect();
+    // MqttClient.Connect();
 
     while (MqttClient.GetConnectionStatus() != MQTT::Client::eConnStat_Established)
     {
-        printf("NotConnected\r\n");
+        printf("\r\nNotConnected");
         OSTimeDly(TICKS_PER_SECOND*5);
     }
 
-    printf("Connected.\r\n");
+    printf("\r\nConnected.");
 
 	while(1) {
-		handleMachine(1,washer1Credits,washer1Cycle,washer1TimeLeft); // washer 1: LED 1
-		handleMachine(2,washer2Credits,washer2Cycle,washer2TimeLeft); // washer 2: LED 2
-		handleMachine(3,dryer1Credits,dryer1Cycle,dryer1TimeLeft); // dryer 1: LED 3
-		handleMachine(4,dryer2Credits,dryer2Cycle,dryer2TimeLeft); // dryer 2: LED 4
-		printf("----\r\n");
+		// LEDs and timeCounters are 0-indexed so we write 0-3 for machines 1-4
+		handleMachine(0,washer1Credits,washer1Cycle,washer1TimeLeft); // washer 1: LED 1
+		handleMachine(1,washer2Credits,washer2Cycle,washer2TimeLeft); // washer 2: LED 2
+		handleMachine(2,dryer1Credits,dryer1Cycle,dryer1TimeLeft); // dryer 1: LED 3
+		handleMachine(3,dryer2Credits,dryer2Cycle,dryer2TimeLeft); // dryer 2: LED 4
+		printf("\r\n----");
 		if (waitchar(TICKS_PER_SECOND*5))
         {
             switch(getchar()){
             	// emulate coins
-            	case '1':
+            	case '0':
             		washer1Credits++;
             		break;
-            	case '2':
+            	case '1':
             		washer2Credits++;
             		break;
-            	case '3':
+            	case '2':
             		dryer1Credits++;
             		break;
-            	case '4':
+            	case '3':
             		dryer2Credits++;
             		break;
             	case 's': // start
