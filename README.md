@@ -8,7 +8,7 @@ This project was developed for NetBurner's NNDK 3.x
 See folder `1-switch-counter`
 
 Either follow the blog instructions to use with NBEclipse, or run `make -j` and `make -j load` with NNDK installed to build for your NetBurner device.
-Further instructions on installing NNDK and using CLI tools are here: https://www.netburner.com/NBDocs/Developer/html/page_command_line_tools.html
+Further instructions on installing [NNDK](https://www.netburner.com/NBDocs/Developer/html/page_n_b_eclipse.html) and [using CLI tools](https://www.netburner.com/NBDocs/Developer/html/page_command_line_tools.html) are also available.
 
 For the web server, either follow the blog instructions or use standard Docker commands to build and run the web server component locally via Docker:
 
@@ -36,4 +36,12 @@ docker rmi web-embedded-blog-1
 
 Database files are saved in the `/tmp` folder of the web server, so they're temporary and may need re-setting-up after reboots. To make them more permanent, change the database file path somewhere intentional.
 
-## Part II: TBD
+## [Part II: Laundromat](https://www.netburner.com/learn/web-embedded-divide-2-laundromat/)
+
+See folder `2-laundromat`
+
+The blog instructions and README are the same, though the blog discusses more theory and architecture useful for understanding the web and embedded decisions being made.
+Further instructions on installing [NNDK](https://www.netburner.com/NBDocs/Developer/html/page_n_b_eclipse.html) and [using CLI tools](https://www.netburner.com/NBDocs/Developer/html/page_command_line_tools.html) are also available. 
+
+See [2-laundromat/README.md](2-laundromat/README.md) for further instructions.
+

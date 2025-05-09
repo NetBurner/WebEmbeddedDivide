@@ -9,7 +9,7 @@ const dom = new JSDOM();
 let document = dom.window.document;
 
 const topicRoot = "laundryExample/";
-const clientId = "mqttjs_" + Math.random().toString(8).substr(2, 4);
+const clientId = process.env.MQTT_CLIENT_ID + Math.random().toString(8).substr(2, 4);
 
 /////////////
 // HTTP stuff
@@ -134,8 +134,8 @@ const requestListener = function (req, res) {
 };
 
 const server = http.createServer(requestListener);
-server.listen(process.env.HTTP_PORT, process.env.HTTP_HOSTNAME, () => {
-    console.log(`HTTP server is running on http://${process.env.HTTP_HOSTNAME}:${process.env.HTTP_PORT}`);
+server.listen(process.env.HTTP_PORT, process.env.HTTP_HOST, () => { //0.0.0.0 binds the listener to "any" local IP
+    console.log(`HTTP server is running on http://${process.env.HTTP_HOST}:${process.env.HTTP_PORT}`);
 });
 
 
@@ -143,7 +143,7 @@ server.listen(process.env.HTTP_PORT, process.env.HTTP_HOSTNAME, () => {
 // MQTT stuff
 /////////////
 
-const client  = mqtt.connect(process.env.MQTT_BROKER_URL, {clientId: clientId, clean: false});
+const client  = mqtt.connect(process.env.MQTT_BROKER_URL, {clientId: clientId, username: process.env.MQTT_CLIENT_USER, password: process.env.MQTT_CLIENT_PW, clean: false});
 
 console.log("MQTT client:", process.env.MQTT_BROKER_URL, "ID:", clientId);
 
